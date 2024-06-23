@@ -34,6 +34,16 @@ def read_users():
     return {'users': database}
 
 
+@app.get('/users/{user_id}', response_model=UserPublic)
+def read_user(user_id: int):
+    if user_id > len(database) or user_id < 1:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+        )
+    user = database[user_id - 1]
+    return user
+
+
 @app.put('/users/{user_id}', response_model=UserPublic)
 def update_user(user_id: int, user: UserSchema):
     if user_id > len(database) or user_id < 1:
@@ -57,20 +67,3 @@ def delete_user(user_id: int):
     del database[user_id - 1]
 
     return {'message': 'User deleted'}
-
-
-# @app.get(
-#     '/hello-world-with-html',
-#     status_code=HTTPStatus.OK,
-#     response_class=HTMLResponse,
-# )
-# def read_route_hello_world_with_html():
-#     return """
-#         <html>
-#             <head>
-#                 <title>Hello, World!</title>
-#             </head>
-#             <body>
-#                 <h1>Hello, World!</h1>
-#             </body>
-#         </html>"""
