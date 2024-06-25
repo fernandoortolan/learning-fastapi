@@ -13,7 +13,6 @@ from learning_fastapi.schemas import (
 app = FastAPI()
 
 database = []
-auto_increment = 0
 
 
 @app.get('/', status_code=HTTPStatus.OK, response_model=Message)
@@ -23,10 +22,7 @@ def read_root():
 
 @app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
 def create_user(user: UserSchema):
-    global auto_increment
-    auto_increment += 1
-
-    user_with_id = UserDB(**user.model_dump(), id=auto_increment)
+    user_with_id = UserDB(**user.model_dump(), id=len(database) + 1)
 
     database.append(user_with_id)
 
@@ -40,52 +36,34 @@ def read_users():
 
 @app.get('/users/{user_id}', response_model=UserPublic)
 def read_user(user_id: int):
-    id_list = []
-    for userdb in database:
-        id_list.append(userdb.id)
-
-    if user_id not in id_list:
+    if user_id > len(database) or user_id < 1:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='User not found'
         )
-
-    index = id_list.index(user_id)
-    user = database[index]
-
+    user = database[user_id - 1]
     return user
 
 
 @app.put('/users/{user_id}', response_model=UserPublic)
 def update_user(user_id: int, user: UserSchema):
-    id_list = []
-    for userdb in database:
-        id_list.append(userdb.id)
-
-    if user_id not in id_list:
+    if user_id > len(database) or user_id < 1:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='User not found'
         )
 
     user_with_id = UserDB(**user.model_dump(), id=user_id)
-
-    index = id_list.index(user_id)
-    database[index] = user_with_id
+    database[user_id - 1] = user_with_id
 
     return user_with_id
 
 
 @app.delete('/users/{user_id}', response_model=Message)
 def delete_user(user_id: int):
-    id_list = []
-    for userdb in database:
-        id_list.append(userdb.id)
-
-    if user_id not in id_list:
+    if user_id > len(database) or user_id < 1:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='User not found'
         )
 
-    index = id_list.index(user_id)
-    del database[index]
+    del database[user_id - 1]
 
     return {'message': 'User deleted'}
