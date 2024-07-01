@@ -97,4 +97,7 @@ def delete_user(user_id: int, session: Session = Depends(get_session)):
             status_code=HTTPStatus.NOT_FOUND, detail='User not found'
         )
 
+    session.delete(db_user)
+    session.commit()
+
     return {'message': 'User deleted'}
