@@ -20,12 +20,12 @@ from learning_fastapi.security import (
 
 router = APIRouter(prefix='/users', tags=['users'])
 
-Session = Annotated[Session, Depends(get_session)]
-CurrentUser = Annotated[User, Depends(get_current_user)]
+T_Session = Annotated[Session, Depends(get_session)]
+T_CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
-def create_user(user: UserSchema, session: Session):
+def create_user(user: UserSchema, session: T_Session):
     db_user = session.scalar(
         select(User).where(
             (User.username == user.username) | (User.email == user.email)
@@ -58,13 +58,13 @@ def create_user(user: UserSchema, session: Session):
 
 
 @router.get('/', response_model=UserList)
-def read_users(session: Session, skip: int = 0, limit: int = 100):
+def read_users(session: T_Session, skip: int = 0, limit: int = 100):
     users = session.scalars(select(User).offset(skip).limit(limit)).all()
     return {'users': users}
 
 
 @router.get('/{user_id}', response_model=UserPublic)
-def read_user(user_id: int, session: Session):
+def read_user(user_id: int, session: T_Session):
     db_user = session.scalar(select(User).where(User.id == user_id))
     if not db_user:
         raise HTTPException(
@@ -77,9 +77,9 @@ def read_user(user_id: int, session: Session):
 def update_user(
     user_id: int,
     user: UserSchema,
-    session: Session,
+    session: T_Session,
     # requer a autenticação de um usuário
-    current_user: CurrentUser,
+    current_user: T_CurrentUser,
 ):
     if current_user.id != user_id:
         raise HTTPException(
@@ -98,8 +98,8 @@ def update_user(
 @router.delete('/{user_id}', response_model=Message)
 def delete_user(
     user_id: int,
-    session: Session,
-    current_user: CurrentUser,
+    session: T_Session,
+    current_user: T_CurrentUser,
 ):
     if current_user.id != user_id:
         raise HTTPException(
