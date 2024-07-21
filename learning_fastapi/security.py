@@ -12,22 +12,22 @@ from zoneinfo import ZoneInfo
 from learning_fastapi.database import get_session
 from learning_fastapi.models import User
 from learning_fastapi.schemas import TokenData
-
-SECRET_KEY = 'your-secret-key'
-ALGORITHM = 'HS256'
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from learning_fastapi.settings import Settings
 
 pwd_context = PasswordHash.recommended()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/token')
+settings = Settings()
 
 
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.now(tz=ZoneInfo('UTC')) + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
     to_encode.update({'exp': expire})
-    encoded_jwt = encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = encode(
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+    )
     return encoded_jwt
 
 
@@ -50,7 +50,9 @@ async def get_current_user(
     )
 
     try:
-        payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
         username: str = payload.get('sub')
         if not username:
             raise credentials_exception
