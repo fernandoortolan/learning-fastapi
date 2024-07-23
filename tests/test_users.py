@@ -21,10 +21,11 @@ def test_create_user(client):
 
 
 def test_create_user_username_already_exists_exception(client, user):
+    already_registered_username = user.username
     response = client.post(
         '/users/',
         json={
-            'username': 'test',
+            'username': f'{already_registered_username}',
             'email': 'user@example.com',
             'password': 'mypassword',
         },
@@ -34,11 +35,12 @@ def test_create_user_username_already_exists_exception(client, user):
 
 
 def test_create_user_email_already_exists_exception(client, user):
+    already_registered_email = user.email
     response = client.post(
         '/users/',
         json={
             'username': 'bob',
-            'email': 'test@example.com',
+            'email': f'{already_registered_email}',
             'password': 'mypassword',
         },
     )
@@ -59,12 +61,12 @@ def test_read_users_with_users(client, user):
 
 
 def test_read_user(client, user):
-    response = client.get('/users/1')
+    response = client.get(f'/users/{user.id}')
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
-        'username': 'test',
-        'email': 'test@example.com',
-        'id': 1,
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
     }
 
 
@@ -92,10 +94,9 @@ def test_update_user(client, user, token):
     }
 
 
-def test_update_wrong_user(client, user, token):
-    wrong_id = user.id + 1
+def test_update_user_with_wrong_user(client, other_user, token):
     response = client.put(
-        f'/users/{wrong_id}',
+        f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'sarah',
@@ -116,10 +117,9 @@ def test_delete_user(client, user, token):
     assert response.json() == {'message': 'User deleted'}
 
 
-def test_delete_wrong_user(client, user, token):
-    wrong_id = user.id + 1
+def test_delete_user_with_wrong_user(client, other_user, token):
     response = client.delete(
-        f'/users/{wrong_id}',
+        f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
     assert response.status_code == HTTPStatus.FORBIDDEN
