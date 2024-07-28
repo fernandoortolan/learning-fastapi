@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 import factory.fuzzy
+from sqlalchemy import select
 
 from learning_fastapi.models import Todo, TodoState
 
@@ -15,7 +16,7 @@ class TodoFactory(factory.Factory):
     user_id = 1
 
 
-def test_create_todo(client, token):
+def test_create_todo(client, token, session):
     response = client.post(
         '/todos/',
         headers={'Authorization': f'Bearer {token}'},
@@ -25,11 +26,18 @@ def test_create_todo(client, token):
             'state': 'draft',
         },
     )
+    
+    db_todo = session.scalar(select(Todo).where(Todo.title == 'Test todo'))
+    created_at_formatted = db_todo.created_at.strftime('%Y-%m-%dT%H:%M:%S')
+    updated_at_formatted = db_todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S')
+
     assert response.json() == {
         'id': 1,
         'title': 'Test todo',
         'description': 'Test todo description',
         'state': 'draft',
+        'created_at': created_at_formatted,
+        'updated_at': updated_at_formatted,
     }
 
 
