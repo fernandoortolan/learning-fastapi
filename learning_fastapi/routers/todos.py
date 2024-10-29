@@ -84,6 +84,7 @@ def patch_todo(
             status_code=HTTPStatus.NOT_FOUND, detail='Task not found.'
         )
 
+    # Exclui os valores que são None no schema
     for key, value in todo.model_dump(exclude_unset=True).items():
         setattr(db_todo, key, value)
 

@@ -3,7 +3,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from sqlalchemy.pool import StaticPool
+from testcontainers.postgres import PostgresContainer
 
 from learning_fastapi.app import app
 from learning_fastapi.database import get_session
@@ -23,13 +23,25 @@ def client(session):
     app.dependency_overrides.clear()
 
 
+# A fixture com escopo "session" será executada apenas uma vez para toda a
+# sessão de testes. Ou seja, ela será inicializada antes da primeira execução
+# e permanecerá ativa durante todos os testes subsequentes, evitando assim a
+# criação de um novo container para cada teste devido ao uso do
+# PostgresContainer.
+# A conexão com o banco de dados será estabelecida apenas uma vez.
+@pytest.fixture(scope='session')
+def engine():
+    with PostgresContainer('postgres:16', driver='psycopg') as postgres:
+        _engine = create_engine(postgres.get_connection_url())
+
+        with _engine.begin():
+            yield _engine
+
+
+# Para cada teste, uma nova sessão de banco de dados será criada, garantindo
+# isolamento entre os testes.
 @pytest.fixture()
-def session():
-    engine = create_engine(
-        'sqlite:///:memory:',
-        connect_args={'check_same_thread': False},
-        poolclass=StaticPool,
-    )
+def session(engine):
     table_registry.metadata.create_all(engine)
 
     with Session(engine) as session:

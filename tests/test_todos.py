@@ -26,10 +26,10 @@ def test_create_todo(client, token, session):
             'state': 'draft',
         },
     )
-    
+
     db_todo = session.scalar(select(Todo).where(Todo.title == 'Test todo'))
-    created_at_formatted = db_todo.created_at.strftime('%Y-%m-%dT%H:%M:%S')
-    updated_at_formatted = db_todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S')
+    created_at_formatted = db_todo.created_at.strftime('%Y-%m-%dT%H:%M:%S.%f')
+    updated_at_formatted = db_todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S.%f')
 
     assert response.json() == {
         'id': 1,
